@@ -7,7 +7,7 @@ Clone the repository and run the following command in the root directory:
 mkdir build && cd build && cmake .. && make
 ```
 
-Place the two images you want to mosaic in respective folders named "DanaHallway1" and "DanaOffice" in the buil directory.
+Place the two images you want to mosaic in respective folders named `DanaHallway1` and `DanaOffice` in the `build` directory.
 
 Run the binary with the following command:
 ```
