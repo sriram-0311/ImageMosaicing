@@ -20,21 +20,45 @@ using namespace cv;
 class cv_factory {
     public:
         // function to read all image files in the directory and return a vector
-        vector<Mat> read_images(string directory) {
+        vector<Mat> read_images(vector<string> directory) {
             // create a vector to store the images
             vector<Mat> imgs;
-            //generate the files names from 1 to 1070 and read the images in grayscale
-            for (int i = 1; i<=1070;i++) {
-                int NumOfZeroes = 4 - to_string(i).length();
-                string ZeroString = "";
-                for (int j = 0; j < NumOfZeroes; j++) {
-                    ZeroString += "0";
-                }
-                string filename = directory + "img01_" + ZeroString + to_string(i) + ".jpg";
-                Mat photos = imread(filename, IMREAD_GRAYSCALE);
-                imgs.push_back(photos);
-            }
+            //read images from the directory vector and store them in the imgs vector
+            Mat img = imread(directory[0]);
+            //scale down the image to 1/4th of its original size
+            resize(img, img, Size(), 0.75, 0.75);
+            imgs.push_back(img);
+            img = imread(directory[1]);
+            resize(img, img, Size(), 0.75, 0.75);
+            imgs.push_back(img);
             return imgs;
+        }
+
+        // find corners in the image using the harris corner detector
+        Mat find_corners(Mat img) {
+            // convert the image to grayscale
+            Mat gray;
+            cvtColor(img, gray, COLOR_BGR2GRAY);
+            // apply the harris corner detector
+            Mat dst, dst_norm, dst_norm_scaled;
+            dst = Mat::zeros(gray.size(), CV_32FC1);
+            // compute the harris R matrix over the image
+            cornerHarris(gray, dst, 5, 5, 0.04, BORDER_DEFAULT);
+            // normalize the R matrix
+            normalize(dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
+            convertScaleAbs(dst_norm, dst_norm_scaled);
+            // threshold the R matrix to find the corners
+            // push corner points into a vector
+            vector<Point> corners;
+            for(int i = 0; i < dst_norm.rows; i++) {
+                for(int j = 0; j < dst_norm.cols; j++) {
+                    if((int)dst_norm.at<float>(i,j) > 120) {
+                        circle(dst_norm_scaled, Point(j,i), 5, Scalar(0), 2, 8, 0);
+                        corners.push_back(Point(j,i));
+                    }
+                }
+            }
+            return dst_norm_scaled;
         }
 
         // function to threshold the temporal gradient image to create a mask of the moving objects
