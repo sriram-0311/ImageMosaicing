@@ -28,14 +28,19 @@ int main(int argc, const char * argv[])
     // read the images from the directory
     vector<Mat> imgs = cvf.read_images(directory);
 
+    vector<Point> corners1, corners2;
+    Mat dst1, dst2;
+
     // find the corners in the images
-    Mat corners1 = cvf.find_corners(imgs[0]);
-    Mat corners2 = cvf.find_corners(imgs[1]);
+    corners1, dst1 = cvf.find_corners(imgs[0]);
+    corners2, dst2 = cvf.find_corners(imgs[1]);
+
+    vector<Point> corres = find_correspondences(imgs[0], imgs[1], corners1, corners2);
 
     // display the images
     imshow("Image 1", imgs[0]);
     imshow("Image 2", imgs[1]);
-    imshow("Image 3", corners1);
-    imshow("Image 4", corners2);
+    imshow("Image 3", dst1);
+    imshow("Image 4", dst2);
     waitKey(0);
 }

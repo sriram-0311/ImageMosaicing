@@ -58,7 +58,38 @@ class cv_factory {
                     }
                 }
             }
-            return dst_norm_scaled;
+            return (corners, dst_norm_scaled);
+        }
+
+        // function that does the normalized cross-correlation
+        Scalar NCC(Mat t1, Mat t2)
+        {   // mean((t1 - mean(t1))*(t2 - mean(t2)))
+            Scalar mean1, mean2;
+            Scalar stds1, stds2;
+            meanStdDev(t1, mean1, stds1);
+            meanStdDev(t2, mean2, stds2);
+            Scalar value = mean((t1 - mean1)*(t2 - mean2))/(stds1*stds2);
+            return value;
+        }
+
+        // find correspondences in the image using the corner points
+        vector<Point> find_correspondences(Mat img1, Mat img2, vector<Point> corners1, vector<Point> corners2)
+        {   Mat template1, template2;
+            Scalar Threshold = 0;
+            int p2;
+            vector<Point> corres;
+            for(int i=0; i<corners1.size(); i++)
+            {   template1 = img1(cv::Rect(i,i,i+3,i+3));
+                for(int j=0; j<corners2.size(); j++)
+                {   template2 = img2(cv::Rect(i,i,i+3,i+3));
+                    Scalar value = NCC(template1, template2);
+                    if(value.val[0] > Threshold.val[0])
+                        {Threshold = value;
+                        p2 = j;}
+                }
+                corres.push_back(Point(i, p2));
+            }
+            return(corres);
         }
 
         // function to threshold the temporal gradient image to create a mask of the moving objects
@@ -87,5 +118,4 @@ class cv_factory {
             cout << deviation;
             return(deviation);
         }
-
 };
