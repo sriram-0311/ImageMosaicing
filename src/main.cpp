@@ -27,20 +27,40 @@ int main(int argc, const char * argv[])
     directory.push_back(path2);
     // read the images from the directory
     vector<Mat> imgs = cvf.read_images(directory);
+    // convert images to grayscale
 
-    vector<Point> corners1, corners2;
+    //vector<Point> corners1, corners2;
     Mat dst1, dst2;
 
     // find the corners in the images
-    corners1, dst1 = cvf.find_corners(imgs[0]);
-    corners2, dst2 = cvf.find_corners(imgs[1]);
+    tuple<vector<Point>, Mat> corners1 = cvf.find_corners(imgs[0]);
+    // take the corner vector from the tuple
+    vector<Point> corners1_vec = get<0>(corners1);
+    dst1 = get<1>(corners1);
+    tuple<vector<Point>, Mat> corners2 = cvf.find_corners(imgs[1]);
+    //cout<<corners1_vec.size()<<endl;
+    vector<Point> corners2_vec = get<0>(corners2);
+    dst2 = get<1>(corners2);
 
-    vector<Point> corres = find_correspondences(imgs[0], imgs[1], corners1, corners2);
+    vector<pair<Point, Point>> corres = cvf.find_correspondences(imgs[0], imgs[1], corners1_vec, corners2_vec);
+
+    //print size of corres
+    cout << "Size of corres: " << corres.size() << endl;
+
+    // print the correspondences
+    // for (int i = 0; i < corres.size(); i++)
+    // {
+    //     cout << "Correspondence " << i << ": " << corres[i].first << " " << corres[i].second << endl;
+    // }
+
+    // draw the correspondences
+    Mat outputImage = cvf.draw_lines(imgs[0], imgs[1], corres);
 
     // display the images
     imshow("Image 1", imgs[0]);
     imshow("Image 2", imgs[1]);
     imshow("Image 3", dst1);
     imshow("Image 4", dst2);
+    imshow("Image 5", outputImage);
     waitKey(0);
 }
