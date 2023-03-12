@@ -32,6 +32,8 @@ class cv_factory {
             img = imread(directory[1]);
             resize(img, img, Size(), 0.75, 0.75);
             imgs.push_back(img);
+            // print the size of imput images
+            cout << "Size of input images: " << imgs[0].size() << "\t" << imgs[1].size() << endl;
             return imgs;
         }
 
@@ -226,6 +228,7 @@ class cv_factory {
                 Mat H = findHomography(corners1, corners2);
                 // find the inliers
                 int inliers = 0;
+                tempCorrespondingPoints.clear();
                 for(int j=0; j<correspondingPoints.size(); j++)
                 {
                     // transform the point in img1 using the homography matrix
@@ -236,9 +239,11 @@ class cv_factory {
                     Mat p2 = H*p;
                     p2 = p2/p2.at<double>(2, 0);
                     // check if the transformed point is within a threshold distance from the corresponding point in img2
-                    if(sqrt(pow(p2.at<double>(0, 0) - correspondingPoints[j].second.x, 2) + pow(p2.at<double>(1, 0) - correspondingPoints[j].second.y, 2)) < 5)
-                        inliers++;
-                        tempCorrespondingPoints.push_back(correspondingPoints[j]);
+                    if(sqrt(pow(p2.at<double>(0, 0) - correspondingPoints[j].second.x, 2) + pow(p2.at<double>(1, 0) - correspondingPoints[j].second.y, 2)) < 1)
+                        {
+                            inliers++;
+                            tempCorrespondingPoints.push_back(correspondingPoints[j]);
+                        }
                 }
                 // if the number of inliers is greater than the previous best, update the best homography matrix
                 if(inliers > maxInliers)

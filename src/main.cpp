@@ -56,6 +56,7 @@ int main(int argc, const char * argv[])
 
 
     Mat outputImage = cvf.draw_lines(imgs[0], imgs[1], BestCorres);
+    cout << "Size of corres: " << BestCorres.size() << endl;
 
     // warp the image
     Mat warpedImage = cvf.warpImage(imgs[0], imgs[1], BestH);
