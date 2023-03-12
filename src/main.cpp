@@ -47,17 +47,15 @@ int main(int argc, const char * argv[])
     //print size of corres
     cout << "Size of corres: " << corres.size() << endl;
 
-    // print the correspondences
-    // for (int i = 0; i < corres.size(); i++)
-    // {
-    //     cout << "Correspondence " << i << ": " << corres[i].first << " " << corres[i].second << endl;
-    // }
-
     // draw the correspondences
-    Mat outputImage = cvf.draw_lines(imgs[0], imgs[1], corres);
+    // Mat outputImage = cvf.draw_lines(imgs[0], imgs[1], corres);
 
     // RANSAC to find the homography
-    Mat BestH = cvf.RANSAC(corres);
+    vector<pair<Point, Point>> BestCorres;
+    Mat BestH = cvf.RANSAC(corres, BestCorres);
+
+
+    Mat outputImage = cvf.draw_lines(imgs[0], imgs[1], BestCorres);
 
     // warp the image
     Mat warpedImage = cvf.warpImage(imgs[0], imgs[1], BestH);

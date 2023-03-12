@@ -60,8 +60,6 @@ class cv_factory {
                     }
                 }
             }
-            //cout<<"find_corners"<<endl;
-            //cout<<"Number of corners: "<<corners.size()<<endl;
             // return the corners vector and the image with the corners marked
             tuple<vector<Point>, Mat> corners_img;
             corners_img = make_tuple(corners, dst_norm_scaled);
@@ -135,7 +133,6 @@ class cv_factory {
             Point p2 = Point(0,0);
             // initialize a vector to store the correspondences as a pair of points
             vector<pair<Point,Point>> corres;
-            //cout << corners1.size() << endl;
             for(int i=0; i<corners1.size(); i++)
             {
                 // check if the template is within the image
@@ -146,19 +143,16 @@ class cv_factory {
                 // create a roi around the corner point
                 cv::Rect roi(corners1[i].x - WindowSize/2, corners1[i].y - WindowSize/2, WindowSize, WindowSize);
                 template1 = img1(roi);
-                //cout<<corners2.size()<<endl;
                 p2 = Point(0,0);
                 double currentMax = 0;
                 for(int j=0; j<corners2.size(); j++)
                 {
-                    //cout<<"Creating template 2"<<endl;
                     // check if the template is within the image
                     if(corners2[j].x - WindowSize/2 <= 0 || corners2[j].x + WindowSize/2 >= img2.cols || corners2[j].y - WindowSize/2 <= 0 || corners2[j].y + WindowSize/2 >= img2.rows)
                         continue;
                     cv::Rect roi2(corners2[j].x - WindowSize/2, corners2[j].y - WindowSize/2, WindowSize, WindowSize);
                     template2 = img2(roi2);
                     double value = NCC(template1, template2);
-                    //cout << value << endl;
                     if(value > Threshold && value > currentMax){
                         currentMax = value;
                         p2 = corners2[j];
@@ -195,20 +189,24 @@ class cv_factory {
                 A.at<double>(2*i+1, 7) = -corners1[i].y*corners2[i].y;
                 A.at<double>(2*i+1, 8) = -corners2[i].y;
             }
+            // make the A matrix square
+            Mat At = A.t();
+            Mat AtA = At*A;
             // find the SVD of the matrix
-            SVD svd(A);
+            SVD svd(AtA);
             // the last column of the V matrix is the solution
             Mat h = svd.vt.row(8);
             // reshape the vector to a 3x3 matrix
-            Mat H = h.reshape(0, 3);
+            Mat H = h.reshape(1, 3);
             // normalize the matrix
             H = H/H.at<double>(2,2);
             return H;
         }
 
         // RANSAC algorithm to find the best homography matrix
-        Mat RANSAC(vector<pair<Point, Point>> correspondingPoints)
+        Mat RANSAC(vector<pair<Point, Point>> correspondingPoints, vector<pair<Point, Point>>& bestCorrespondingPoints)
         {
+            vector<pair<Point, Point>> tempCorrespondingPoints;
             // initialize the best homography matrix
             Mat bestH = Mat::zeros(3, 3, CV_64F);
             // sample 4 points randomly from the vector of corresponding points
@@ -240,15 +238,18 @@ class cv_factory {
                     // check if the transformed point is within a threshold distance from the corresponding point in img2
                     if(sqrt(pow(p2.at<double>(0, 0) - correspondingPoints[j].second.x, 2) + pow(p2.at<double>(1, 0) - correspondingPoints[j].second.y, 2)) < 5)
                         inliers++;
+                        tempCorrespondingPoints.push_back(correspondingPoints[j]);
                 }
                 // if the number of inliers is greater than the previous best, update the best homography matrix
                 if(inliers > maxInliers)
                 {
                     maxInliers = inliers;
+                    bestCorrespondingPoints = tempCorrespondingPoints;
                     bestH = H;
                 }
             }
             return bestH;
+
         }
 
         // warp the image using the homography matrix
