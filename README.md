@@ -53,7 +53,7 @@ NCC = (Template1 - Mean(Template1)) * (Template2 - Mean(Template2)) / (StdDev(Te
 ### Dana Office
 Input Image 1             |  Input Image 2
 :-------------------------:|:-------------------------:
-![](build/DanaOffice/DSC_0308.JPG)  |  ![](build/DanaOffice/DSC_0309.JPG.jpg)
+![](dataset/DanaOffice/DSC_0308.JPG)  |  ![](dataset/DanaOffice/DSC_0309.JPG)
 
 ### Corner Detection
 Corner Detection Image 1             |  Corner Detection Image 2
