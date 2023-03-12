@@ -27,10 +27,10 @@ class cv_factory {
             //read images from the directory vector and store them in the imgs vector
             Mat img = imread(directory[0]);
             //scale down the image to 1/4th of its original size
-            resize(img, img, Size(), 0.75, 0.75);
+            resize(img, img, Size(), 0.5, 0.5);
             imgs.push_back(img);
             img = imread(directory[1]);
-            resize(img, img, Size(), 0.75, 0.75);
+            resize(img, img, Size(), 0.5, 0.5);
             imgs.push_back(img);
             // print the size of imput images
             cout << "Size of input images: " << imgs[0].size() << "\t" << imgs[1].size() << endl;
@@ -260,6 +260,7 @@ class cv_factory {
         // warp the image using the homography matrix
         Mat warpImage(Mat img1, Mat img2, Mat H)
         {
+            cout<<"Warping the image..."<<endl;
             // find the corners of the image
             vector<Point> corners1, corners2;
             corners1.push_back(Point(0, 0));
@@ -267,6 +268,7 @@ class cv_factory {
             corners1.push_back(Point(img1.cols, img1.rows));
             corners1.push_back(Point(0, img1.rows));
             // transform the corners using the homography matrix
+            cout<<"Transforming the corners..."<<endl;
             for(int i=0; i<4; i++)
             {
                 Mat p = Mat::zeros(3, 1, CV_64F);
@@ -277,23 +279,29 @@ class cv_factory {
                 p2 = p2/p2.at<double>(2, 0);
                 corners2.push_back(Point(p2.at<double>(0, 0), p2.at<double>(1, 0)));
             }
+            cout<<"Done"<<endl;
             // find the minimum and maximum x and y values
             int minX = min(min(corners2[0].x, corners2[1].x), min(corners2[2].x, corners2[3].x));
             int maxX = max(max(corners2[0].x, corners2[1].x), max(corners2[2].x, corners2[3].x));
             int minY = min(min(corners2[0].y, corners2[1].y), min(corners2[2].y, corners2[3].y));
             int maxY = max(max(corners2[0].y, corners2[1].y), max(corners2[2].y, corners2[3].y));
+            cout<<"Minimum x: "<<minX<<endl;
             // create a new image with the size of the minimum and maximum values
-            Mat img3 = Mat::zeros(maxY, maxX, img1.type());
+            Mat img3 = Mat::zeros(maxY - minY, maxX - minX, img1.type());
+            cout<<"New image size: "<<img3.rows<<"x"<<img3.cols<<endl;
             // warp the image using the homography matrix
             warpPerspective(img1, img3, H, img3.size());
+            cout<<"Done"<<endl;
             // copy the second image into the new image
             img2.copyTo(img3(Rect(0, 0, img2.cols, img2.rows)));
+            cout<<"Done"<<endl;
             return img3;
         }
 
         // draw lines between the corresponding points in the two images and return single with two input images one above the other
         Mat draw_lines(Mat img1, Mat img2, vector<pair<Point,Point>> correspondingPoints)
         {
+            cout<<"Drawing lines between corresponding points"<<endl;
             // create a new image with size of the two input images one top of another
             Mat img3 = Mat::zeros(img1.rows + img2.rows, img1.cols, img1.type());
             // copy the two input images into the new image
