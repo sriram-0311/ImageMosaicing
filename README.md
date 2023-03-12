@@ -53,7 +53,7 @@ NCC = (Template1 - Mean(Template1)) * (Template2 - Mean(Template2)) / (StdDev(Te
 ### Dana Office
 Input Image 1             |  Input Image 2
 :-------------------------:|:-------------------------:
-![](build/DanaOffice/DSC_0308.JPG.jpg)  |  ![](build/DanaOffice/DSC_0309.JPG.jpg)
+![](build/DanaOffice/DSC_0308.JPG)  |  ![](build/DanaOffice/DSC_0309.JPG.jpg)
 
 ### Corner Detection
 Corner Detection Image 1             |  Corner Detection Image 2
@@ -68,7 +68,7 @@ Correspondances Matched Image before RANSAC             |  Correspondances Match
 ### Warped Image
 Warped Image             |  Blended Image
 :-----------------------:|:-----------------------:
-![](output/warpedImage2_withoutblending.jpg)  |  ![](output/warpedImage.jpg)
+![](output/warpedImage_withoutblending.jpg)  |  ![](output/warpedImage.jpg)
 
 Warping 3 images             |  Blending 3 images
 :---------------------------:|:---------------------------:
