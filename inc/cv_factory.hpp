@@ -139,7 +139,7 @@ class cv_factory {
             {
                 // check if the template is within the image
                 //cout<<"Creating templates"<<endl;
-                int WindowSize = 21;
+                int WindowSize = 5;
                 if(corners1[i].x - WindowSize/2 <= 0 || corners1[i].x + WindowSize/2 >= img1.cols || corners1[i].y - WindowSize/2 <= 0 || corners1[i].y + WindowSize/2 >= img1.rows)
                     continue;
                 // create a roi around the corner point
@@ -283,7 +283,7 @@ class cv_factory {
             int minY = min(min(corners2[0].y, corners2[1].y), min(corners2[2].y, corners2[3].y));
             int maxY = max(max(corners2[0].y, corners2[1].y), max(corners2[2].y, corners2[3].y));
             // create a new image with the size of the minimum and maximum values
-            Mat img3 = Mat::zeros(maxY - minY, maxX - minX, img1.type());
+            Mat img3 = Mat::zeros(maxY, maxX, img1.type());
             // warp the image using the homography matrix
             warpPerspective(img1, img3, H, img3.size());
             // copy the second image into the new image
