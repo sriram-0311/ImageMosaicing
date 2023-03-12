@@ -56,11 +56,18 @@ int main(int argc, const char * argv[])
     // draw the correspondences
     Mat outputImage = cvf.draw_lines(imgs[0], imgs[1], corres);
 
+    // RANSAC to find the homography
+    Mat BestH = cvf.RANSAC(corres);
+
+    // warp the image
+    Mat warpedImage = cvf.warpImage(imgs[0], imgs[1], BestH);
+
     // display the images
     imshow("Image 1", imgs[0]);
     imshow("Image 2", imgs[1]);
     imshow("Image 3", dst1);
     imshow("Image 4", dst2);
     imshow("Image 5", outputImage);
+    imshow("Image 6", warpedImage);
     waitKey(0);
 }

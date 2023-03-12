@@ -174,27 +174,115 @@ class cv_factory {
             return corres;
         }
 
-        // find the homography matrix using the correspondences and the corner points
-        Mat find_homography(vector<Point> corners1, vector<Point> corners2, vector<Point> corres)
-        {   Mat A = Mat::zeros(2*corres.size(), 9, CV_32F);
-            for(int i=0; i<corres.size(); i++)
-            {   A.at<float>(2*i, 0) = corners1[corres[i].x].x;
-                A.at<float>(2*i, 1) = corners1[corres[i].x].y;
-                A.at<float>(2*i, 2) = 1;
-                A.at<float>(2*i, 6) = -corners1[corres[i].x].x*corners2[corres[i].y].x;
-                A.at<float>(2*i, 7) = -corners1[corres[i].x].y*corners2[corres[i].y].x;
-                A.at<float>(2*i, 8) = -corners2[corres[i].y].x;
-                A.at<float>(2*i+1, 3) = corners1[corres[i].x].x;
-                A.at<float>(2*i+1, 4) = corners1[corres[i].x].y;
-                A.at<float>(2*i+1, 5) = 1;
-                A.at<float>(2*i+1, 6) = -corners1[corres[i].x].x*corners2[corres[i].y].y;
-                A.at<float>(2*i+1, 7) = -corners1[corres[i].x].y*corners2[corres[i].y].y;
-                A.at<float>(2*i+1, 8) = -corners2[corres[i].y].y;
+        // find the homography matrix using 4 correspondance points as input
+        Mat findHomography(vector<Point> corners1, vector<Point> corners2)
+        {
+            // create a matrix of 8x9
+            Mat A = Mat::zeros(8, 9, CV_64F);
+            // fill the matrix with the values
+            for(int i=0; i<4; i++)
+            {
+                A.at<double>(2*i, 0) = corners1[i].x;
+                A.at<double>(2*i, 1) = corners1[i].y;
+                A.at<double>(2*i, 2) = 1;
+                A.at<double>(2*i, 6) = -corners1[i].x*corners2[i].x;
+                A.at<double>(2*i, 7) = -corners1[i].y*corners2[i].x;
+                A.at<double>(2*i, 8) = -corners2[i].x;
+                A.at<double>(2*i+1, 3) = corners1[i].x;
+                A.at<double>(2*i+1, 4) = corners1[i].y;
+                A.at<double>(2*i+1, 5) = 1;
+                A.at<double>(2*i+1, 6) = -corners1[i].x*corners2[i].y;
+                A.at<double>(2*i+1, 7) = -corners1[i].y*corners2[i].y;
+                A.at<double>(2*i+1, 8) = -corners2[i].y;
             }
-            Mat u, w, vt;
-            SVD::compute(A, w, u, vt);
-            Mat H = vt.row(8).reshape(0, 3);
+            // find the SVD of the matrix
+            SVD svd(A);
+            // the last column of the V matrix is the solution
+            Mat h = svd.vt.row(8);
+            // reshape the vector to a 3x3 matrix
+            Mat H = h.reshape(0, 3);
+            // normalize the matrix
+            H = H/H.at<double>(2,2);
             return H;
+        }
+
+        // RANSAC algorithm to find the best homography matrix
+        Mat RANSAC(vector<pair<Point, Point>> correspondingPoints)
+        {
+            // initialize the best homography matrix
+            Mat bestH = Mat::zeros(3, 3, CV_64F);
+            // sample 4 points randomly from the vector of corresponding points
+            vector<Point> corners1, corners2;
+            int maxInliers = 0;
+            for(int i=0; i<1000; i++)
+            {
+                corners1.clear();
+                corners2.clear();
+                for(int j=0; j<4; j++)
+                {
+                    int index = rand() % correspondingPoints.size();
+                    corners1.push_back(correspondingPoints[index].first);
+                    corners2.push_back(correspondingPoints[index].second);
+                }
+                // find the homography matrix using the 4 points
+                Mat H = findHomography(corners1, corners2);
+                // find the inliers
+                int inliers = 0;
+                for(int j=0; j<correspondingPoints.size(); j++)
+                {
+                    // transform the point in img1 using the homography matrix
+                    Mat p = Mat::zeros(3, 1, CV_64F);
+                    p.at<double>(0, 0) = correspondingPoints[j].first.x;
+                    p.at<double>(1, 0) = correspondingPoints[j].first.y;
+                    p.at<double>(2, 0) = 1;
+                    Mat p2 = H*p;
+                    p2 = p2/p2.at<double>(2, 0);
+                    // check if the transformed point is within a threshold distance from the corresponding point in img2
+                    if(sqrt(pow(p2.at<double>(0, 0) - correspondingPoints[j].second.x, 2) + pow(p2.at<double>(1, 0) - correspondingPoints[j].second.y, 2)) < 5)
+                        inliers++;
+                }
+                // if the number of inliers is greater than the previous best, update the best homography matrix
+                if(inliers > maxInliers)
+                {
+                    maxInliers = inliers;
+                    bestH = H;
+                }
+            }
+            return bestH;
+        }
+
+        // warp the image using the homography matrix
+        Mat warpImage(Mat img1, Mat img2, Mat H)
+        {
+            // find the corners of the image
+            vector<Point> corners1, corners2;
+            corners1.push_back(Point(0, 0));
+            corners1.push_back(Point(img1.cols, 0));
+            corners1.push_back(Point(img1.cols, img1.rows));
+            corners1.push_back(Point(0, img1.rows));
+            // transform the corners using the homography matrix
+            for(int i=0; i<4; i++)
+            {
+                Mat p = Mat::zeros(3, 1, CV_64F);
+                p.at<double>(0, 0) = corners1[i].x;
+                p.at<double>(1, 0) = corners1[i].y;
+                p.at<double>(2, 0) = 1;
+                Mat p2 = H*p;
+                p2 = p2/p2.at<double>(2, 0);
+                corners2.push_back(Point(p2.at<double>(0, 0), p2.at<double>(1, 0)));
+            }
+            // find the minimum and maximum x and y values
+            int minX = min(min(corners2[0].x, corners2[1].x), min(corners2[2].x, corners2[3].x));
+            int maxX = max(max(corners2[0].x, corners2[1].x), max(corners2[2].x, corners2[3].x));
+            int minY = min(min(corners2[0].y, corners2[1].y), min(corners2[2].y, corners2[3].y));
+            int maxY = max(max(corners2[0].y, corners2[1].y), max(corners2[2].y, corners2[3].y));
+            // create a new image with the size of the minimum and maximum values
+            Mat img3 = Mat::zeros(maxY - minY, maxX - minX, img1.type());
+            // warp the image using the homography matrix
+            warpPerspective(img1, img3, H, img3.size());
+            // copy the second image into the new image
+            img2.copyTo(img3(Rect(0, 0, img2.cols, img2.rows)));
+            return img3;
         }
 
         // draw lines between the corresponding points in the two images and return single with two input images one above the other
