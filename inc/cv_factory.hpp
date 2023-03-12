@@ -25,13 +25,19 @@ class cv_factory {
             // create a vector to store the images
             vector<Mat> imgs;
             //read images from the directory vector and store them in the imgs vector
-            Mat img = imread(directory[0]);
-            //scale down the image to 1/4th of its original size
-            resize(img, img, Size(), 0.5, 0.5);
-            imgs.push_back(img);
-            img = imread(directory[1]);
-            resize(img, img, Size(), 0.5, 0.5);
-            imgs.push_back(img);
+            // Mat img = imread(directory[0]);
+            // //scale down the image to 1/4th of its original size
+            // resize(img, img, Size(), 0.75, 0.75);
+            // imgs.push_back(img);
+            // img = imread(directory[1]);
+            // resize(img, img, Size(), 0.75, 0.75);
+            // imgs.push_back(img);
+
+            for(int i = 0; i < directory.size(); i++) {
+                Mat img = imread(directory[i]);
+                resize(img, img, Size(), 0.75, 0.75);
+                imgs.push_back(img);
+            }
             // print the size of imput images
             cout << "Size of input images: " << imgs[0].size() << "\t" << imgs[1].size() << endl;
             return imgs;
@@ -287,13 +293,38 @@ class cv_factory {
             int maxY = max(max(corners2[0].y, corners2[1].y), max(corners2[2].y, corners2[3].y));
             cout<<"Minimum x: "<<minX<<endl;
             // create a new image with the size of the minimum and maximum values
-            Mat img3 = Mat::zeros(maxY - minY, maxX - minX, img1.type());
+            Mat img3 = Mat::zeros(maxY, maxX, img1.type());
             cout<<"New image size: "<<img3.rows<<"x"<<img3.cols<<endl;
             // warp the image using the homography matrix
             warpPerspective(img1, img3, H, img3.size());
             cout<<"Done"<<endl;
-            // copy the second image into the new image
-            img2.copyTo(img3(Rect(0, 0, img2.cols, img2.rows)));
+            // blend the second image onto the new image
+            cout<<"Blending the images..."<<endl;
+            //img2.copyTo(img3(Rect(0, 0, img2.cols, img2.rows)));
+            // traverse the new image pixel by pixel
+            for(int i=0; i<img3.rows; i++)
+            {
+                for(int j=0; j<img3.cols; j++)
+                {
+                    // if the pixel is black, copy the pixel from the second image
+                    if(img3.at<Vec3b>(i, j) == Vec3b(0, 0, 0))
+                    {
+                        if(i < img2.rows && j < img2.cols)
+                            img3.at<Vec3b>(i, j) = img2.at<Vec3b>(i, j);
+                    }
+
+                    // if the pixel is not black, average the pixel with the pixel from the second image
+                    else
+                    {
+                        if(i < img2.rows && j < img2.cols)
+                        {
+                            img3.at<Vec3b>(i, j)[0] = (img3.at<Vec3b>(i, j)[0] + img2.at<Vec3b>(i, j)[0])/2;
+                            img3.at<Vec3b>(i, j)[1] = (img3.at<Vec3b>(i, j)[1] + img2.at<Vec3b>(i, j)[1])/2;
+                            img3.at<Vec3b>(i, j)[2] = (img3.at<Vec3b>(i, j)[2] + img2.at<Vec3b>(i, j)[2])/2;
+                        }
+                    }
+                }
+            }
             cout<<"Done"<<endl;
             return img3;
         }
@@ -323,30 +354,5 @@ class cv_factory {
             return img3;
         }
 
-        // function to threshold the temporal gradient image to create a mask of the moving objects
-        Mat thresholding(Mat temporal_gradient, int threshold_value) {
-            // threshold the result to create a mask of the moving objects
-            Mat mask;
-            threshold(temporal_gradient, mask, threshold_value, 255, THRESH_BINARY);
-            return mask;
-        }
-
-        // Strategy to threshold the images after passing through a prewitt mask and using those images to find
-        // the std deviation that will be our new threshold to be used for final thresholding and getting the mask
-        double ThreshStrategy(vector<Mat> imgs)
-        {
-            vector<double> stdevs;
-            Scalar mean, std;
-            vector<Mat> processed_imgs;
-            for(int i=0; i<imgs.size()-1; i++)
-            {
-                Mat temp;
-                temp = abs((-imgs[i] + imgs[i + 1]));
-                meanStdDev(temp, mean, std);
-                stdevs.push_back(std[0]);
-            }
-            double deviation  = std::accumulate(stdevs.begin(), stdevs.end(), 0) / stdevs.size();
-            cout << deviation;
-            return(deviation);
-        }
+        // get the clicked pixel coordinates and store them in the correspondingPoints vector
 };

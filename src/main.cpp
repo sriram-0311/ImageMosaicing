@@ -20,11 +20,14 @@ int main(int argc, const char * argv[])
     // command line arguments to get path of 2 images
     string path1 = argv[1];
     string path2 = argv[2];
+    string path3 = argv[3];
+    string path4 = argv[4];
     // create a vector to store the directory of the images
     vector<string> directory;
     // add the directory of the images to
     directory.push_back(path1);
     directory.push_back(path2);
+    directory.push_back(path3);
     // read the images from the directory
     vector<Mat> imgs = cvf.read_images(directory);
     // convert images to grayscale
@@ -48,7 +51,7 @@ int main(int argc, const char * argv[])
     cout << "Size of corres: " << corres.size() << endl;
 
     // draw the correspondences
-    // Mat outputImage = cvf.draw_lines(imgs[0], imgs[1], corres);
+    Mat outputImage_preRansac = cvf.draw_lines(imgs[0], imgs[1], corres);
 
     // RANSAC to find the homography
     vector<pair<Point, Point>> BestCorres;
@@ -61,12 +64,35 @@ int main(int argc, const char * argv[])
     // warp the image
     Mat warpedImage = cvf.warpImage(imgs[0], imgs[1], BestH);
 
+    // find correspondances between the new image and a third image
+    tuple<vector<Point>, Mat> corners3 = cvf.find_corners(imgs[2]);
+    tuple<vector<Point>, Mat> corners4 = cvf.find_corners(warpedImage);
+    vector<Point> corners3_vec = get<0>(corners3);
+    vector<Point> corners4_vec = get<0>(corners4);
+
+    vector<pair<Point, Point>> corres2 = cvf.find_correspondences(warpedImage, imgs[2], corners4_vec, corners3_vec);
+
+    // RANSAC to find the homography
+    vector<pair<Point, Point>> BestCorres2;
+    Mat BestH2 = cvf.RANSAC(corres2, BestCorres2);
+
+    // warp the image
+    Mat warpedImage2 = cvf.warpImage(warpedImage, imgs[2], BestH2);
+
     // display the images
     imshow("Image 1", imgs[0]);
     imshow("Image 2", imgs[1]);
-    imshow("Image 3", dst1);
-    imshow("Image 4", dst2);
     imshow("Image 5", outputImage);
     imshow("Image 6", warpedImage);
+    imshow("Image 7", warpedImage2);
+
+    // save the images to /output directory
+    imwrite("../output/correspondances.jpg", outputImage);
+    imwrite("../output/correspondances_preRansac.jpg", outputImage_preRansac);
+    imwrite("../output/warpedImage.jpg", warpedImage);
+    imwrite("../output/warpedImage2.jpg", warpedImage2);
+    imwrite("../output/corners1.jpg", dst1);
+    imwrite("../output/corners2.jpg", dst2);
+
     waitKey(0);
 }
