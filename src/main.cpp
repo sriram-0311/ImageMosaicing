@@ -21,7 +21,7 @@ int main(int argc, const char * argv[])
     string path1 = argv[1];
     string path2 = argv[2];
     string path3 = argv[3];
-    string path4 = argv[4];
+    // string path4 = argv[4];
     // create a vector to store the directory of the images
     vector<string> directory;
     // add the directory of the images to
