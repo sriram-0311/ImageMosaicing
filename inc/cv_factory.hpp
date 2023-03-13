@@ -27,7 +27,7 @@ class cv_factory {
             // read the images from the directory
             for(int i = 0; i < directory.size(); i++) {
                 Mat img = imread(directory[i]);
-                resize(img, img, Size(), 0.5, 0.5);
+                resize(img, img, Size(), 0.75, 0.75);
                 imgs.push_back(img);
             }
             // print the size of imput images
@@ -284,7 +284,7 @@ class cv_factory {
             int maxY = max(max(corners2[0].y, corners2[1].y), max(corners2[2].y, corners2[3].y));
             cout<<"Minimum x: "<<minX<<endl;
             // create a new image with the size of the minimum and maximum values
-            Mat img3 = Mat::zeros(maxY - minY, maxX - minX, img1.type());
+            Mat img3 = Mat::zeros(maxY , maxX , img1.type());
             cout<<"New image size: "<<img3.rows<<"x"<<img3.cols<<endl;
             // warp the image using the homography matrix
             warpPerspective(img1, img3, H, img3.size());
