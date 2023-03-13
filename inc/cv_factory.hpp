@@ -24,22 +24,13 @@ class cv_factory {
             cout<<"read_images"<<endl;
             // create a vector to store the images
             vector<Mat> imgs;
-            //read images from the directory vector and store them in the imgs vector
-            // Mat img = imread(directory[0]);
-            // //scale down the image to 1/4th of its original size
-            // resize(img, img, Size(), 0.75, 0.75);
-            // imgs.push_back(img);
-            // img = imread(directory[1]);
-            // resize(img, img, Size(), 0.75, 0.75);
-            // imgs.push_back(img);
-
+            // read the images from the directory
             for(int i = 0; i < directory.size(); i++) {
                 Mat img = imread(directory[i]);
                 resize(img, img, Size(), 0.75, 0.75);
                 imgs.push_back(img);
             }
             // print the size of imput images
-            cout << "Size of input images: " << imgs[0].size() << "\t" << imgs[1].size() << endl;
             return imgs;
         }
 
@@ -354,5 +345,32 @@ class cv_factory {
             return img3;
         }
 
-        // get the clicked pixel coordinates and store them in the correspondingPoints vector
+        // warp image 2 onto image 1 using the homography matrix and the destination pixel coordinates in image 1
+        Mat outputImage(Mat img1, Mat img2, vector<Point> dstPoints) {
+            // find the corners of the image
+            vector<Point> corners1, corners2;
+            corners1.push_back(Point(0, 0));
+            corners1.push_back(Point(img1.cols, 0));
+            corners1.push_back(Point(img1.cols, img1.rows));
+            corners1.push_back(Point(0, img1.rows));
+            // find the homography matrix for transforming the image 1 to a window of size dstPoints
+            Mat H1 = findHomography(corners1, dstPoints);
+            // duplicate the image 2 and warp image 1 on top of the duplicate image 2
+            Mat img3 = img2.clone();
+            warpPerspective(img1, img3, H1, img3.size());
+            // traverse the image pixel by pixel
+            for(int i=0; i<img3.rows; i++)
+            {
+                for(int j=0; j<img3.cols; j++)
+                {
+                    // if the pixel is black, copy the pixel from the second image
+                    if(img3.at<Vec3b>(i, j) == Vec3b(0, 0, 0))
+                    {
+                        if(i < img2.rows && j < img2.cols)
+                            img3.at<Vec3b>(i, j) = img2.at<Vec3b>(i, j);
+                    }
+                }
+            }
+            return img3;
+        }
 };

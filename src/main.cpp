@@ -80,11 +80,11 @@ int main(int argc, const char * argv[])
     Mat warpedImage2 = cvf.warpImage(warpedImage, imgs[2], BestH2);
 
     // display the images
-    imshow("Image 1", imgs[0]);
-    imshow("Image 2", imgs[1]);
-    imshow("Image 5", outputImage);
-    imshow("Image 6", warpedImage);
-    imshow("Image 7", warpedImage2);
+    // imshow("Image 1", imgs[0]);
+    // imshow("Image 2", imgs[1]);
+    // imshow("Image 5", outputImage);
+    // imshow("Image 6", warpedImage);
+    // imshow("Image 7", warpedImage2);
 
     // save the images to /output directory
     imwrite("../output/correspondances.jpg", outputImage);
@@ -93,6 +93,20 @@ int main(int argc, const char * argv[])
     imwrite("../output/warpedImage2.jpg", warpedImage2);
     imwrite("../output/corners1.jpg", dst1);
     imwrite("../output/corners2.jpg", dst2);
+
+    // display image to register pixel locations of mouse clicks
+    Mat SampleImage = imread("DanaOffice/opencv.jpg");
+    // warp sampleimage onto the input image
+    //107,151;225,147;107,229;223,229
+    vector<Point> cornersInImage;
+    cornersInImage.push_back(Point(107,151));
+    cornersInImage.push_back(Point(225,147));
+    cornersInImage.push_back(Point(223,229));
+    cornersInImage.push_back(Point(107,229));
+    Mat InputImage = imread(path1);
+    Mat warpedSampleImage = cvf.outputImage(SampleImage, InputImage, cornersInImage);
+    imshow("Sample Image", warpedSampleImage);
+    imwrite("../output/SampleImage.jpg", warpedSampleImage);
 
     waitKey(0);
 }
