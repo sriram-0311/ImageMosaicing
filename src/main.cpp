@@ -21,7 +21,7 @@ int main(int argc, const char * argv[])
     string path1 = argv[1];
     string path2 = argv[2];
     string path3 = argv[3];
-    string path4 = argv[4];
+    // string path4 = argv[4];
     // create a vector to store the directory of the images
     vector<string> directory;
     // add the directory of the images to
@@ -84,7 +84,7 @@ int main(int argc, const char * argv[])
     imshow("Image 2", imgs[1]);
     imshow("Image 5", outputImage);
     imshow("Image 6", warpedImage);
-    imshow("Image 7", warpedImage2);
+    // imshow("Image 7", warpedImage2);
 
     // save the images to /output directory
     imwrite("../output/correspondances.jpg", outputImage);
