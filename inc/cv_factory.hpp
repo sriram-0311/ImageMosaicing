@@ -66,35 +66,35 @@ class cv_factory {
             return best_corners;
         }
 
-        // function to perform sobel operation on the image without using opencv sobel function
-        tuple<Mat, Mat> sobel(Mat gray) {
-            cout<<"sobel"<<endl;
-            // convert the image to grayscale
-            Mat grad_x, grad_y;
-            Mat abs_grad_x, abs_grad_y;
-            // apply sobel operator to find the gradient in the x direction
-            for(int i = 0; i < gray.rows; i++) {
-                for(int j = 0; j < gray.cols; j++) {
-                    // check for boundary conditions
-                    if(i == 0 || i == gray.rows - 1 || j == 0 || j == gray.cols - 1)
-                        continue;
-                    grad_x.at<float>(i, j) = (gray.at<float>(i - 1, j - 1) + 2 * gray.at<float>(i, j - 1) + gray.at<float>(i + 1, j - 1)) - (gray.at<float>(i - 1, j + 1) + 2 * gray.at<float>(i, j + 1) + gray.at<float>(i + 1, j + 1));
-                }
-            }
-            // apply sobel operator to find the gradient in the y direction
-            for(int i = 1; i < gray.rows - 1; i++) {
-                for(int j = 1; j < gray.cols - 1; j++) {
-                    // check for boundary conditions
-                    if(i == 0 || i == gray.rows - 1 || j == 0 || j == gray.cols - 1)
-                        continue;
-                    grad_y.at<float>(i, j) = (gray.at<float>(i - 1, j - 1) + 2 * gray.at<float>(i - 1, j) + gray.at<float>(i - 1, j + 1)) - (gray.at<float>(i + 1, j - 1) + 2 * gray.at<float>(i + 1, j) + gray.at<float>(i + 1, j + 1));
-                }
-            }
-            // convert the gradient images to CV_8UC1
-            convertScaleAbs(grad_x, abs_grad_x);
-            convertScaleAbs(grad_y, abs_grad_y);
-            return make_tuple(grad_x, grad_y);
-        }
+        // // function to perform sobel operation on the image without using opencv sobel function
+        // tuple<Mat, Mat> sobel(Mat gray) {
+        //     cout<<"sobel"<<endl;
+        //     // convert the image to grayscale
+        //     Mat grad_x, grad_y;
+        //     Mat abs_grad_x, abs_grad_y;
+        //     // apply sobel operator to find the gradient in the x direction
+        //     for(int i = 0; i < gray.rows; i++) {
+        //         for(int j = 0; j < gray.cols; j++) {
+        //             // check for boundary conditions
+        //             if(i == 0 || i == gray.rows - 1 || j == 0 || j == gray.cols - 1)
+        //                 continue;
+        //             grad_x.at<float>(i, j) = (gray.at<float>(i - 1, j - 1) + 2 * gray.at<float>(i, j - 1) + gray.at<float>(i + 1, j - 1)) - (gray.at<float>(i - 1, j + 1) + 2 * gray.at<float>(i, j + 1) + gray.at<float>(i + 1, j + 1));
+        //         }
+        //     }
+        //     // apply sobel operator to find the gradient in the y direction
+        //     for(int i = 1; i < gray.rows - 1; i++) {
+        //         for(int j = 1; j < gray.cols - 1; j++) {
+        //             // check for boundary conditions
+        //             if(i == 0 || i == gray.rows - 1 || j == 0 || j == gray.cols - 1)
+        //                 continue;
+        //             grad_y.at<float>(i, j) = (gray.at<float>(i - 1, j - 1) + 2 * gray.at<float>(i - 1, j) + gray.at<float>(i - 1, j + 1)) - (gray.at<float>(i + 1, j - 1) + 2 * gray.at<float>(i + 1, j) + gray.at<float>(i + 1, j + 1));
+        //         }
+        //     }
+        //     // convert the gradient images to CV_8UC1
+        //     convertScaleAbs(grad_x, abs_grad_x);
+        //     convertScaleAbs(grad_y, abs_grad_y);
+        //     return make_tuple(grad_x, grad_y);
+        // }
 
         // function to compute the R matrix using the harris corner detector
         Mat CornerHarris(Mat img, int window_size, int k, int threshold) {
@@ -107,12 +107,12 @@ class cv_factory {
             dst = Mat::zeros(gray.size(), CV_32FC1);
             // apply Sobel operator to find the gradient of the image
             Mat grad_x, grad_y;
-            tuple<Mat, Mat> grad = sobel(gray);
-            grad_x = get<0>(grad);
-            grad_y = get<1>(grad);
-            // print the values of grad_x and grad_y
-            cout << "grad_x: " << grad_x << endl;
-            cout << "grad_y: " << grad_y << endl;
+            Mat abs_grad_x, abs_grad_y;
+            Sobel(gray, grad_x, CV_32F, 1, 0, 3, 1, 0, BORDER_DEFAULT);
+            Sobel(gray, grad_y, CV_32F, 0, 1, 3, 1, 0, BORDER_DEFAULT);
+            // convert the gradient images to CV_8UC1
+            convertScaleAbs(grad_x, abs_grad_x);
+            convertScaleAbs(grad_y, abs_grad_y);
             Mat Ix2, Iy2, Ixy;
             Ix2 = grad_x.mul(grad_x);
             Iy2 = grad_y.mul(grad_y);
@@ -162,7 +162,7 @@ class cv_factory {
             //     circle(dst_norm_scaled, best_corners[i], 5, Scalar(0), 2, 8, 0);
             // }
             // return the R matrix
-            return Ix2;
+            return dst_norm_scaled;
         }
 
         // find corners in the image using the harris corner detector
@@ -187,7 +187,7 @@ class cv_factory {
             for(int i = 0; i < dst_norm.rows; i++) {
                 for(int j = 0; j < dst_norm.cols; j++) {
                     if((int)dst_norm.at<float>(i,j) > 120) {
-                        //circle(dst_norm, Point(j,i), 5, Scalar(0), 2, 8, 0);
+                        circle(img, Point(j,i), 5, Scalar(0), 2, 8, 0);
                         corners.push_back(Point(j,i));
                     }
                 }

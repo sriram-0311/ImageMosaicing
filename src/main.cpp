@@ -97,18 +97,18 @@ int main(int argc, const char * argv[])
     // imwrite("../output/corners2.jpg", dst2);
 
     // display image to register pixel locations of mouse clicks
-    Mat SampleImage = imread("DanaOffice/opencv.jpg");
-    // warp sampleimage onto the input image
-    //107,151;225,147;107,229;223,229
-    vector<Point> cornersInImage;
-    cornersInImage.push_back(Point(107,151));
-    cornersInImage.push_back(Point(225,147));
-    cornersInImage.push_back(Point(223,229));
-    cornersInImage.push_back(Point(107,229));
-    Mat InputImage = imread(path1);
-    Mat warpedSampleImage = cvf.outputImage(SampleImage, InputImage, cornersInImage);
-    imshow("Sample Image", warpedSampleImage);
-    imwrite("../output/SampleImage.jpg", warpedSampleImage);
+    // Mat SampleImage = imread("DanaOffice/opencv.jpg");
+    // // warp sampleimage onto the input image
+    // //107,151;225,147;107,229;223,229
+    // vector<Point> cornersInImage;
+    // cornersInImage.push_back(Point(107,151));
+    // cornersInImage.push_back(Point(225,147));
+    // cornersInImage.push_back(Point(223,229));
+    // cornersInImage.push_back(Point(107,229));
+    // Mat InputImage = imread(path1);
+    // Mat warpedSampleImage = cvf.outputImage(SampleImage, InputImage, cornersInImage);
+    // imshow("Sample Image", warpedSampleImage);
+    // imwrite("../output/SampleImage.jpg", warpedSampleImage);
 
     waitKey(0);
 }
