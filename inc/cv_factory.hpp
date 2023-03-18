@@ -35,69 +35,52 @@ class cv_factory {
         }
 
         // function to implement non-maxima suppression to find the best corners given the R matrix
-        vector<Point> non_maxima_suppression(Mat R, int window_size) {
+        Mat non_maxima_suppression(Mat R, int window_size) {
             cout<<"non_maxima_suppression"<<endl;
             // create a vector to store the best corners
             vector<Point> best_corners;
+            Mat R_copy = R.clone();
             // iterate through the R matrix
-            for(int i = 0; i < R.rows; i++) {
-                for(int j = 0; j < R.cols; j++) {
+            int i = 0;
+            int j = 0;
+            // find the minimum value in the R matrix using inbuilt function
+            double min;
+            minMaxLoc(R, &min);
+            cout<<"min: "<<min<<endl;
+
+            while(i < R.rows){
+                if (i == 0)
+                    {i++;
+                    continue;}
+                while(j < R.cols){
                     // if the value of the R matrix is greater than the threshold, then check if it is the maximum value in the window
-                    if(R.at<float>(i, j) > 120) {
-                        // create a flag to check if the value is the maximum in the window
-                        bool flag = true;
-                        // iterate through the window
-                        for(int k = i - window_size; k <= i + window_size; k++) {
-                            for(int l = j - window_size; l <= j + window_size; l++) {
-                                // if the value is greater than the threshold and the value is greater than the value in the R matrix, then set the flag to false
-                                if(R.at<float>(k, l) > 120 && R.at<float>(k, l) > R.at<float>(i, j)) {
-                                    flag = false;
-                                }
+                    // create a flag to check if the value is the maximum in the window
+                    if (j == 0)
+                        {j++;
+                        continue;}
+                    if(R.at<float>(i, j) < 100)
+                        {R_copy.at<float>(i, j) = min;
+                        j++;
+                        continue;}
+                    // iterate through the window
+                    for(int k = i - window_size/2; k <= i + window_size/2; k++) {
+                        for(int l = j - window_size/2; l <= j + window_size/2; l++) {
+                            // if the value is greater than the threshold and the value is greater than the value in the R matrix, then set the flag to false
+                            if(R.at<float>(k, l) > R.at<float>(i,j) ) {
+                                R_copy.at<float>(i, j) = min;
                             }
                         }
-                        // if the flag is true, then add the point to the best corners vector
-                        if(flag) {
-                            best_corners.push_back(Point(j, i));
-                        }
                     }
+                    j = j + 1;
                 }
+                i = i + 1;
             }
-            // return the best corners vector
-            return best_corners;
+            // return the suppressed R matrix
+            return R_copy;
         }
 
-        // // function to perform sobel operation on the image without using opencv sobel function
-        // tuple<Mat, Mat> sobel(Mat gray) {
-        //     cout<<"sobel"<<endl;
-        //     // convert the image to grayscale
-        //     Mat grad_x, grad_y;
-        //     Mat abs_grad_x, abs_grad_y;
-        //     // apply sobel operator to find the gradient in the x direction
-        //     for(int i = 0; i < gray.rows; i++) {
-        //         for(int j = 0; j < gray.cols; j++) {
-        //             // check for boundary conditions
-        //             if(i == 0 || i == gray.rows - 1 || j == 0 || j == gray.cols - 1)
-        //                 continue;
-        //             grad_x.at<float>(i, j) = (gray.at<float>(i - 1, j - 1) + 2 * gray.at<float>(i, j - 1) + gray.at<float>(i + 1, j - 1)) - (gray.at<float>(i - 1, j + 1) + 2 * gray.at<float>(i, j + 1) + gray.at<float>(i + 1, j + 1));
-        //         }
-        //     }
-        //     // apply sobel operator to find the gradient in the y direction
-        //     for(int i = 1; i < gray.rows - 1; i++) {
-        //         for(int j = 1; j < gray.cols - 1; j++) {
-        //             // check for boundary conditions
-        //             if(i == 0 || i == gray.rows - 1 || j == 0 || j == gray.cols - 1)
-        //                 continue;
-        //             grad_y.at<float>(i, j) = (gray.at<float>(i - 1, j - 1) + 2 * gray.at<float>(i - 1, j) + gray.at<float>(i - 1, j + 1)) - (gray.at<float>(i + 1, j - 1) + 2 * gray.at<float>(i + 1, j) + gray.at<float>(i + 1, j + 1));
-        //         }
-        //     }
-        //     // convert the gradient images to CV_8UC1
-        //     convertScaleAbs(grad_x, abs_grad_x);
-        //     convertScaleAbs(grad_y, abs_grad_y);
-        //     return make_tuple(grad_x, grad_y);
-        // }
-
         // function to compute the R matrix using the harris corner detector
-        Mat CornerHarris(Mat img, int window_size, int k, int threshold) {
+        tuple<vector<Point>, Mat> CornerHarris(Mat img, int window_size, float k, int threshold) {
             cout<<"CornerHarris"<<endl;
             // convert the image to grayscale
             Mat gray;
@@ -152,17 +135,26 @@ class cv_factory {
                 }
             }
             // normalize the R matrix
-
             normalize(R, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
-            convertScaleAbs(dst_norm, dst_norm_scaled);
+            //convertScaleAbs(dst_norm, dst_norm_scaled);
             // apply non-maxima suppression to get the best corners
-            // vector<Point> best_corners = non_maxima_suppression(R, window_size);
-            // // draw the best corners on the image
-            // for(int i = 0; i < best_corners.size(); i++) {
-            //     circle(dst_norm_scaled, best_corners[i], 5, Scalar(0), 2, 8, 0);
-            // }
+            Mat SuppressedR = non_maxima_suppression(dst_norm, 3);
+            vector<Point> corners;
+            for(int i = 0; i < dst_norm.rows; i++) {
+                for(int j = 0; j < dst_norm.cols; j++) {
+                    if((int)SuppressedR.at<float>(i,j) > 100) {
+                        circle(gray, Point(j,i), 5, Scalar(0), 2, 8, 0);
+                        corners.push_back(Point(j,i));
+                    }
+                }
+            }
+            tuple<vector<Point>, Mat> corners_img;
+            corners_img = make_tuple(corners, img);
             // return the R matrix
-            return dst_norm_scaled;
+            // print the mean and standard deviation of the dst_norm_scaled
+            // cout<<"mean: "<<mean(dst_norm_scaled)<<endl;
+            //cout<<dst_norm_scaled<<endl;
+            return corners_img;
         }
 
         // find corners in the image using the harris corner detector
@@ -172,30 +164,8 @@ class cv_factory {
             Mat gray;
             cvtColor(img, gray, COLOR_BGR2GRAY);
             // apply the harris corner detector
-            Mat dst, dst_norm, dst_norm_scaled;
-            dst = Mat::zeros(gray.size(), CV_32FC1);
-            // compute the harris R matrix over the image
-            // cornerHarris(gray, dst, 5, 5, 0.04, BORDER_DEFAULT);
-            dst_norm = CornerHarris(img, 5, 0.04, 120);
-
-            // normalize the R matrix
-            // normalize(dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
-            // convertScaleAbs(dst_norm, dst_norm_scaled);
-            // threshold the R matrix to find the corners
-            // push corner points into a vector
-            vector<Point> corners;
-            for(int i = 0; i < dst_norm.rows; i++) {
-                for(int j = 0; j < dst_norm.cols; j++) {
-                    if((int)dst_norm.at<float>(i,j) > 120) {
-                        circle(img, Point(j,i), 5, Scalar(0), 2, 8, 0);
-                        corners.push_back(Point(j,i));
-                    }
-                }
-            }
-            // return the corners vector and the image with the corners marked
-            tuple<vector<Point>, Mat> corners_img;
-            corners_img = make_tuple(corners, dst_norm);
-            return corners_img;
+            tuple<vector<Point>, Mat> dst_norm_scaled = CornerHarris(img, 5, 0.04, 120);
+            return dst_norm_scaled;
         }
 
         // function that does the normalized cross-correlation

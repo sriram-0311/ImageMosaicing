@@ -31,7 +31,7 @@ int main(int argc, const char * argv[])
     // read the images from the directory
     vector<Mat> imgs = cvf.read_images(directory);
     // print the type of data in the images
-    cout << "Type of data in the images: " << imgs[0].type() << endl;
+    //cout << "Type of data in the images: " << imgs[0].type() << endl;
     vector<Mat> imgs_orig = cvf.read_images(directory);
     //vector<Point> corners1, corners2;
     Mat dst1, dst2;
@@ -45,24 +45,24 @@ int main(int argc, const char * argv[])
     vector<Point> corners2_vec = get<0>(corners2);
     dst2 = get<1>(corners2);
 
-    // vector<pair<Point, Point>> corres = cvf.find_correspondences(imgs[0], imgs[1], corners1_vec, corners2_vec);
+    vector<pair<Point, Point>> corres = cvf.find_correspondences(imgs[0], imgs[1], corners1_vec, corners2_vec);
 
     //print size of corres
     // cout << "Size of corres: " << corres.size() << endl;
 
     // draw the correspondences
-    // Mat outputImage_preRansac = cvf.draw_lines(imgs[0], imgs[1], corres);
+    Mat outputImage_preRansac = cvf.draw_lines(imgs[0], imgs[1], corres);
 
     // RANSAC to find the homography
-    // vector<pair<Point, Point>> BestCorres;
-    // Mat BestH = cvf.RANSAC(corres, BestCorres);
+    vector<pair<Point, Point>> BestCorres;
+    Mat BestH = cvf.RANSAC(corres, BestCorres);
 
 
-    // Mat outputImage = cvf.draw_lines(imgs[0], imgs[1], BestCorres);
+    Mat outputImage = cvf.draw_lines(imgs[0], imgs[1], BestCorres);
     // cout << "Size of corres: " << BestCorres.size() << endl;
 
     // warp the image
-    // Mat warpedImage = cvf.warpImage(imgs[0], imgs[1], BestH);
+    Mat warpedImage = cvf.warpImage(imgs[0], imgs[1], BestH);
 
     // find correspondances between the new image and a third image
     // tuple<vector<Point>, Mat> corners3 = cvf.find_corners(imgs[2]);
@@ -80,12 +80,12 @@ int main(int argc, const char * argv[])
     // Mat warpedImage2 = cvf.warpImage(warpedImage, imgs[2], BestH2);
 
     // display the images
-    imshow("Image 1", imgs_orig[0]);
-    imshow("Image 2", imgs_orig[1]);
-    imshow("Image 3", dst1);
-    imshow("Image 4", dst2);
-    // imshow("Image 5", outputImage);
-    // imshow("Image 6", warpedImage);
+    imshow("Image 1", imgs[0]);
+    // imshow("Image 2", imgs_orig[1]);
+    // imshow("Image 3", dst1);
+    imshow("Image 4", outputImage_preRansac);
+    imshow("Image 5", outputImage);
+    imshow("Image 6", warpedImage);
     // imshow("Image 7", warpedImage2);
 
     // save the images to /output directory
